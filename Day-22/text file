@@ -1,0 +1,63 @@
+The Nautilus DevOps team needs to set up a new EC2 instance that can be accessed securely from their landing host (aws-client). The instance should be of type t2.micro and named xfusion-ec2. A new SSH key with name id_rsa should be created on the aws-client host under the/root/.ssh/ folder, if it doesn't already exist. This key should then be added to the root user's authorised keys on the EC2 instance, allowing passwordless SSH access from the aws-client host.
+
+ChatGPT said:
+To complete this task, perform the following steps.
+
+1. Create the SSH key on aws-client
+Log in to the aws-client host and check whether the key already exists:
+
+ls -l /root/.ssh/id_rsa /root/.ssh/id_rsa.pub
+
+If it does not exist, create it:
+
+ssh-keygen -t rsa -b 2048 -f /root/.ssh/id_rsa -N ""
+
+This creates:
+
+/root/.ssh/id_rsa
+/root/.ssh/id_rsa.pub
+2. Launch the EC2 instance
+In the AWS EC2 Console (Region: us-east-1):
+
+Launch a new instance.
+Name: xfusion-ec2
+AMI: Any Linux AMI (e.g. Ubuntu or Amazon Linux)
+Instance type: t2.micro
+Wait until:
+
+Instance state = Running
+2/2 Status checks passed
+3. Add the public key to the EC2 instance
+Display the public key on aws-client:
+
+cat /root/.ssh/id_rsa.pub
+
+Copy the entire output.
+
+SSH into the EC2 instance using the default user (for example ubuntu or ec2-user), then become root:
+
+sudo -i
+
+Create the .ssh directory if needed:
+
+mkdir -p /root/.ssh
+chmod 700 /root/.ssh
+
+Append the copied public key:
+
+echo "PASTE_THE_CONTENTS_OF_id_rsa.pub_HERE" >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+4. Verify passwordless SSH
+From the aws-client host, test the connection:
+
+ssh -i /root/.ssh/id_rsa root@<EC2_PUBLIC_IP>
+
+If you log in without being prompted for a password, the setup is complete.
+
+This satisfies the requirements:
+
+EC2 instance named xfusion-ec2
+Instance type t2.micro
+SSH key /root/.ssh/id_rsa created on aws-client if it didn't already exist
+Public key added to /root/.ssh/authorized_keys on the EC2 instance for passwordless root access.
