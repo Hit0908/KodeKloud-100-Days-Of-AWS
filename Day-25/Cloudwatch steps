@@ -1,0 +1,212 @@
+The Nautilus DevOps team has been tasked with setting up an EC2 instance for their application. To ensure the application performs optimally, they also need to create a CloudWatch alarm to monitor the instance's CPU utilization. The alarm should trigger if the CPU utilization exceeds 90% for one consecutive 5-minute period. To send notifications, use the SNS topic named datacenter-sns-topic which is already created.
+
+Launch EC2 Instance: Create an EC2 instance named datacenter-ec2 using any appropriate Ubuntu AMI.
+
+Create CloudWatch Alarm: Create a CloudWatch alarm named datacenter-alarm with the following specifications:
+
+Statistic: Average
+Metric: CPU Utilization
+Threshold: >= 90% for 1 consecutive 5-minute period.
+Alarm Actions: Send a notification to datacenter-sns-topic.
+
+ChatGPT said:
+AWS Console Setup: EC2 Instance + CloudWatch CPU Alarm
+Follow these steps in the AWS Management Console.
+
+Part 1: Launch EC2 Instance (datacenter-ec2)
+1. Open EC2 Console
+Go to:
+
+AWS Console → EC2 → Instances → Launch instances
+
+2. Configure Instance
+Name
+Enter:
+
+datacenter-ec2
+
+3. Select AMI
+Choose any Ubuntu AMI, for example:
+
+Ubuntu Server 22.04 LTS (HVM), SSD Volume Type
+
+4. Choose Instance Type
+Select an appropriate instance type, for example:
+
+t2.micro
+
+(or another available size based on requirements)
+
+5. Key Pair
+Select an existing key pair or create a new one.
+
+Example:
+
+datacenter-key
+
+Download the key if creating a new one.
+
+6. Network Settings
+Configure:
+
+VPC: Select the required VPC
+Subnet: Any available subnet
+Auto-assign public IP: Enable (if SSH access is required)
+7. Security Group
+Create or select a security group.
+
+For SSH access:
+
+Inbound rule:
+
+Type	Protocol	Port	Source
+SSH	TCP	22	Your IP
+
+8. Storage
+Leave default settings unless additional storage is required.
+
+9. Launch Instance
+Click:
+
+Launch instance
+
+Wait until the instance state becomes:
+
+Running
+
+Part 2: Create CloudWatch Alarm (datacenter-alarm)
+1. Open CloudWatch
+Go to:
+
+AWS Console → CloudWatch
+
+2. Create Alarm
+Navigate:
+
+CloudWatch → Alarms → All alarms → Create alarm
+
+3. Select Metric
+Click:
+
+Select metric
+
+Choose:
+
+EC2
+   → Per-Instance Metrics
+
+Find:
+
+datacenter-ec2
+
+Select:
+
+CPUUtilization
+
+Click:
+
+Select metric
+
+4. Configure Conditions
+Set:
+
+Statistic
+Average
+
+Period
+5 minutes
+
+Threshold type
+Static
+
+Condition
+Greater/Equal
+
+Threshold value
+90
+
+Configuration:
+
+CPUUtilization >= 90%
+for 1 consecutive period of 5 minutes
+
+5. Configure Alarm Notification
+Under:
+
+Notification
+
+For alarm state:
+
+In alarm
+
+Select SNS topic:
+
+datacenter-sns-topic
+
+If the topic does not appear:
+
+Go to:
+SNS → Topics
+
+Verify:
+datacenter-sns-topic
+
+exists.
+Return to CloudWatch alarm creation.
+6. Alarm Name
+Enter:
+
+datacenter-alarm
+
+(Optional description)
+
+Example:
+
+Alarm when EC2 CPU utilization exceeds 90%
+
+7. Create Alarm
+Click:
+
+Create alarm
+
+Verification
+Verify EC2 Instance
+Go to:
+
+EC2 → Instances
+
+Confirm:
+
+Name: datacenter-ec2
+State: Running
+
+Verify CloudWatch Alarm
+Go to:
+
+CloudWatch → Alarms
+
+Confirm:
+
+Alarm name: datacenter-alarm
+Metric: CPUUtilization
+Statistic: Average
+Threshold: >= 90%
+Period: 5 minutes
+SNS Action: datacenter-sns-topic
+
+The final setup will be:
+
+EC2 Instance
+   |
+   | CPUUtilization Metric
+   |
+CloudWatch Alarm
+(datacenter-alarm)
+   |
+   |
+SNS Topic
+(datacenter-sns-topic)
+   |
+Notification Subscribers
+
+This completes the EC2 and CloudWatch monitoring configuration.
