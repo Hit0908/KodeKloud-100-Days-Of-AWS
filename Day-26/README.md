@@ -21,6 +21,8 @@ Clicking "Launch EC2" gives you a blank operating system, not a web server. To h
 
 In this task, instead of manually logging into the server via SSH and typing installation commands one-by-one, you learn the art of **EC2 User Data**. User Data allows you to inject a bash script into the EC2 instance during its very first boot cycle, automatically installing and configuring Nginx before you even login.
 
+##JUST CREATE AN EC2 INSTANCE ALLOWING HTTP AND IN ADVANCED SETTINGS ADD THE SCRIPT ##
+
 ---
 
 ## 📜 User Data Automation Script
