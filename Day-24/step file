@@ -1,0 +1,183 @@
+The Nautilus DevOps team is currently working on setting up a simple application on the AWS cloud. They aim to establish an Application Load Balancer (ALB) in front of an EC2 instance where an Nginx server is currently running. While the Nginx server currently serves a sample page, the team plans to deploy the actual application later.
+
+Set up an Application Load Balancer named xfusion-alb.
+Create a target group named xfusion-tg.
+Create a security group named xfusion-sg to open port 80 for the public.
+Attach this security group to the ALB.
+The ALB should route traffic on port 80 to port 80 of the xfusion-ec2 instance.
+Make appropriate changes in the default security group attached to the EC2 instance if necessary.
+
+Setup on aws UI
+
+ChatGPT said:
+To set this up using the AWS Management Console (UI), follow these steps.
+
+1. Create a Security Group for the ALB (xfusion-sg)
+Open AWS Console → EC2 → Security Groups
+Click Create security group
+Enter:
+Security group name: xfusion-sg
+Description: Security group for xfusion ALB
+VPC: Select the same VPC where xfusion-ec2 exists
+Add Inbound rule:
+Type	Protocol	Port	Source
+HTTP	TCP	80	Anywhere IPv4 (0.0.0.0/0)
+
+Leave outbound rules as default:
+Allow all outbound traffic
+Click Create security group
+2. Update EC2 Instance Security Group
+The ALB must be able to send traffic to the EC2 instance on port 80.
+
+Go to:
+EC2 → Instances → Select xfusion-ec2
+
+Open the Security tab.
+Click the attached security group.
+Add an inbound rule:
+Type	Protocol	Port	Source
+HTTP	TCP	80	xfusion-sg
+
+Using the ALB security group as the source is recommended instead of opening port 80 publicly.
+
+Save rules.
+3. Create Target Group (xfusion-tg)
+Go to:
+EC2 → Target Groups
+
+Click Create target group
+
+Configure:
+
+Basic configuration
+
+Target type: Instances
+Target group name: xfusion-tg
+Protocol: HTTP
+Port: 80
+IP address type: IPv4
+Select the correct VPC.
+Health checks:
+Protocol: HTTP
+Path: /
+Click Next
+Select the instance:
+Select xfusion-ec2
+Click:
+Include as pending below
+
+Click:
+Create target group
+
+4. Create Application Load Balancer (xfusion-alb)
+Go to:
+EC2 → Load Balancers
+
+Click:
+Create Load Balancer
+
+Select:
+Application Load Balancer
+
+Configure:
+Basic configuration
+Load balancer name:
+xfusion-alb
+
+Scheme:
+Internet-facing
+
+IP address type:
+IPv4
+
+5. Configure Network Mapping
+Select the same VPC as xfusion-ec2.
+Select at least two Availability Zones.
+Example:
+
+Subnet A
+Subnet B
+
+(ALB requires multiple AZ subnets.)
+
+6. Attach Security Group
+Under Security groups:
+
+Remove the default security group if attached.
+Select:
+xfusion-sg
+
+7. Configure Listener
+Under Listeners and routing:
+
+Create listener:
+
+Protocol: HTTP
+Port: 80
+
+Default action:
+
+Forward to:
+xfusion-tg
+
+8. Create the Load Balancer
+Review settings:
+
+Name: xfusion-alb
+Security group: xfusion-sg
+Listener: HTTP : 80
+Target group: xfusion-tg
+Click:
+
+Create load balancer
+
+9. Verify Setup
+Check Target Health
+Go to:
+
+EC2 → Target Groups → xfusion-tg → Targets
+
+Verify:
+
+xfusion-ec2
+Status: healthy
+
+If unhealthy:
+
+Confirm Nginx is running:
+systemctl status nginx
+
+Confirm port 80 is open.
+Confirm EC2 security group allows HTTP from xfusion-sg.
+10. Test ALB
+Go to:
+
+EC2 → Load Balancers → xfusion-alb
+
+Copy the:
+
+DNS name
+
+Open it in a browser:
+
+http://<ALB-DNS-NAME>
+
+You should see the Nginx sample page served through the Application Load Balancer.
+
+Final architecture:
+
+Internet
+   |
+   |
+xfusion-alb
+(Security Group: xfusion-sg)
+   |
+   | HTTP :80
+   |
+xfusion-tg
+   |
+   |
+xfusion-ec2
+(Nginx :80)
+
+This completes the ALB setup through the AWS Console.
