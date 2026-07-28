@@ -1,0 +1,82 @@
+Here is the step-by-step guide to configure VPC peering between a public VPC (default VPC) and a private VPC, based on the setup in the video:
+
+Step 1: Create the VPC Peering Connection
+Open the AWS Management Console and navigate to the VPC Service.
+
+In the left navigation menu, select Peering Connections.
+
+Click Create Peering Connection.
+
+Enter a name tag for the peering connection.
+
+Under VPC ID (Requester), select the Default / Public VPC.
+
+Under VPC ID (Acceptor), select the Private VPC.
+
+Click Create Peering Connection.
+
+Step 2: Accept the Peering Request
+Select the newly created peering connection from the list.
+
+Click the Actions dropdown menu at the top.
+
+Click Accept Request to activate the connection.
+
+Step 3: Update Route Tables
+To allow traffic to flow between both VPCs, you must update the route table for each VPC:
+
+Update Default / Public VPC Route Table:
+
+Go to VPC > Route Tables.
+
+Copy the CIDR block of the Private VPC.
+
+Select the route table associated with the Default VPC.
+
+Click Edit routes > Add route.
+
+Set the Destination to the Private VPC CIDR block.
+
+Set the Target to Peering Connection and select the connection created in Step 1.
+
+Click Save changes.
+
+Update Private VPC Route Table:
+
+Copy the CIDR block of the Default VPC.
+
+Select the route table associated with the Private VPC.
+
+Click Edit routes > Add route.
+
+Set the Destination to the Default VPC CIDR block.
+
+Set the Target to Peering Connection and select the same peering connection.
+
+Click Save changes.
+
+Step 4: Configure Security Groups
+Public EC2 Instance Security Group:
+
+Go to EC2 > Security Groups.
+
+Edit the inbound rules to allow SSH traffic (Port 22) so you can log into the public instance.
+
+Private EC2 Instance Security Group:
+
+Edit the inbound rules for the Private EC2 instance's security group.
+
+Add a rule for All ICMP - IPv4 (or SSH if required).
+
+Set the Source to the Default VPC CIDR block (allowing traffic originating only from the public VPC).
+
+Click Save rules.
+
+Step 5: Test Connectivity
+SSH into the Public EC2 Instance from your local machine/AWS client.
+
+From inside the Public EC2 instance terminal, run a ping command using the private IPv4 address of the Private EC2 instance:
+
+Bash
+ping <PRIVATE_EC2_IP_ADDRESS>
+If packets transmit successfully, the VPC Peering Connection is fully configured and working.
