@@ -1,0 +1,41 @@
+
+Here is a step-by-step breakdown of how a public VPC with an EC2 instance is configured in the video Day 27: Configuring Public VPC with EC2 for Internet Access | 100 Days of AWS | KodeKloud Engineer:
+
+1. Create a Custom VPC
+Action: Navigate to the AWS VPC Console and select Create VPC (VPC only) [00:00:33].
+
+Details: Name the VPC datacenter-pub-vpc and set the IPv4 CIDR block to 10.0.0.0/16.
+
+2. Create and Configure Subnet
+Action: Create a subnet inside datacenter-pub-vpc named datacenter-pub-subnet with the CIDR block 10.0.0.0/24 [00:01:42].
+
+Auto-assign Public IP: Edit the subnet settings and enable Auto-assign public IPv4 address so instances created in this subnet automatically receive a public IP [00:02:03].
+
+3. Setup Internet Gateway & Routing
+Subnet Association: Associate the route table with the newly created subnet [00:03:07].
+
+Internet Gateway: Create an Internet Gateway named datacenter public internet gateway [00:04:12] and attach it to datacenter-pub-vpc [00:04:26].
+
+Route Entry: Edit the route table rules to add a route for 0.0.0.0/0 targeting the attached Internet Gateway, enabling public internet routing [00:04:59].
+
+4. Launch EC2 Instance
+Action: Navigate to the EC2 Dashboard and launch a new instance named datacenter-pub-ec2 using Amazon Linux and instance type t2.micro [00:05:37].
+
+Network Settings: Select datacenter-pub-vpc and datacenter-pub-subnet.
+
+Security Group: Create a security group allowing inbound SSH (Port 22) and HTTP traffic [00:06:59].
+
+5. Verify Internet Access
+Connection: Connect to the instance using EC2 Instance Connect [00:07:53].
+
+Test: Execute a ping command to confirm that the instance has outbound internet access [00:08:36].
+
+
+summary:
+1. create a vpc (vpc only)
+2. create a subnet - enable auto assign ip, assign subnet to created vpc
+3.setup IGW
+4.setup Route tables - edit route table and attach it to the internet gateway and subnet
+5.edit route table routes and add a new route for 0.0.0.0/0 targeting attached IGW
+6.create a ec2 instance with the vpc, and sg- http,ssh allowed
+7. connect and check whether internet is accessible for this public vpc
