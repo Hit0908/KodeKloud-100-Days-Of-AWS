@@ -1,0 +1,110 @@
+Here's how to enable internet access for your private EC2 instance using an Amazon Linux 2023 NAT instance.
+
+1. Create Public Subnet & Internet Gateway
+Create Public Subnet:
+
+Go to VPC Console > Subnets > Create subnet.
+
+Select datacenter-priv-vpc.
+
+Subnet name: datacenter-pub-subnet.
+
+Choose an Availability Zone (matching or compatible with your private subnet).
+
+Specify a CIDR block (e.g., 10.0.1.0/24, assuming your VPC uses 10.0.0.0/16).
+
+Internet Gateway & Route Table:
+
+Ensure an Internet Gateway (IGW) is attached to datacenter-priv-vpc (create and attach one if it doesn't exist).
+
+Create a public route table (or use the existing public one), add a route:
+
+Destination: 0.0.0.0/0
+
+Target: Internet Gateway (igw-xxxx)
+
+Associate this route table with datacenter-pub-subnet.
+
+Enable Auto-assign public IPv4 address on datacenter-pub-subnet.
+
+2. Configure Security Group for NAT Instance
+Go to EC2 Console > Security Groups > Create security group.
+
+Name: datacenter-nat-sg
+
+VPC: datacenter-priv-vpc
+
+Inbound Rules:
+
+HTTP (80) & HTTPS (443) (or All Traffic for testing) from the CIDR of datacenter-priv-subnet (e.g., 10.0.2.0/24).
+
+Outbound Rules:
+
+All Traffic to 0.0.0.0/0.
+
+3. Launch & Configure NAT Instance
+Launch Instance:
+
+Name: datacenter-nat-instance
+
+AMI: Amazon Linux 2023
+
+Network settings:
+
+VPC: datacenter-priv-vpc
+
+Subnet: datacenter-pub-subnet
+
+Auto-assign Public IP: Enable
+
+Security Group: Select datacenter-nat-sg
+
+Disable Source/Destination Check:
+
+Select datacenter-nat-instance > Actions > Networking > Change source/destination check.
+
+Check Stop and save changes.
+
+Configure NAT Routing inside the Instance:
+Connect via SSH or EC2 Instance Connect to datacenter-nat-instance and run:
+
+Bash
+# Update system and install iptables services
+sudo dnf install -y iptables-services
+
+# Enable IPv4 forwarding in kernel
+echo "net.ipv4.ip_forward=1" | sudo tee -a /etc/sysctl.d/custom-ip-forward.conf
+sudo sysctl -p /etc/sysctl.d/custom-ip-forward.conf
+
+# Identify your primary network interface (usually eth0)
+IFACE=$(ip route | grep default | awk '{print $5}')
+
+# Configure IP masquerading via iptables
+sudo iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
+sudo iptables -A FORWARD -i $IFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i eth+ -j ACCEPT
+
+# Save iptables rules and enable service on boot
+sudo service iptables save
+sudo systemctl enable --now iptables
+4. Update Private Subnet Route Table
+Go to VPC Console > Route Tables.
+
+Select the route table associated with datacenter-priv-subnet.
+
+Go to Routes > Edit routes.
+
+Add a new route:
+
+Destination: 0.0.0.0/0
+
+Target: Instance > Select datacenter-nat-instance.
+
+Save changes.
+
+5. Verification
+Wait 1–2 minutes for the cron job on datacenter-priv-ec2 to execute.
+
+Go to S3 Console > Buckets > datacenter-nat-5135.
+
+Verify that datacenter-test.txt appears in the bucket list.
