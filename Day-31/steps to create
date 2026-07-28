@@ -1,0 +1,42 @@
+Provisioning a Private MySQL RDS Instance
+Step 1: Open the RDS Console
+Log in to the AWS Management Console.
+
+Search for and select RDS from the services menu.
+
+In the left sidebar, click Databases, then click Create database.
+
+Step 2: Set Creation Method and Engine Configuration
+Under Choose a database creation method, select Standard create (Full configuration).
+
+Under Engine options, select MySQL.
+
+Select engine version 8.4.x from the version dropdown.
+
+Under Templates, select Free tier.
+
+Step 3: Set Instance Settings and Instance Type
+In DB instance identifier, type datacenter-rds.
+
+Configure the master username and password for database administration.
+
+Under Instance configuration, set the DB instance class to db.t3.micro.
+
+Step 4: Configure Storage Autoscaling
+Under Storage, ensure Enable storage autoscaling is checked.
+
+Set Maximum storage threshold to 50 GB.
+
+Step 5: Configure Private Network Settings
+Under Connectivity, choose your desired VPC and Subnet group.
+
+Set Publicly accessible to No (to ensure it remains a private instance).
+
+Attach the necessary VPC security group.
+
+Keep all remaining settings at their default values.
+
+Step 6: Create and Verify Availability
+Click Create database at the bottom of the page.
+
+Monitor the database list until the status for datacenter-rds updates from Creating to Available.
