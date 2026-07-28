@@ -65,6 +65,8 @@ Select datacenter-nat-instance > Actions > Networking > Change source/destinatio
 
 Check Stop and save changes.
 
+IMPORTANT: PRIVATE ROUTE TABLE > EDIT INBOUND > 0.0.0.0/0 >INSTANCE>NAT (ASSOCIATE NAT INSTANCE TO THE PRIVATE ROUTE TABLE VIA 0.0.0.0/0)
+
 Configure NAT Routing inside the Instance:
 Connect via SSH or EC2 Instance Connect to datacenter-nat-instance and run:
 
