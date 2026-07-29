@@ -1,0 +1,42 @@
+As a member of the Nautilus DevOps Team, your task is to perform the following:
+
+Take a Snapshot: Take a snapshot of the devops-rds RDS instance and name it devops-snapshot (please wait devops-rds instance to be in available state).
+
+Restore the Snapshot: Restore the snapshot to a new RDS instance named devops-snapshot-restore.
+
+Configure the New RDS Instance: Ensure that the new RDS instance has a class of db.t3.micro.
+
+Verify the New RDS Instance: The new RDS instance must be in the Available state upon completion of the restoration process.
+
+------------------------------------------------------------------------------------
+
+Here is a step-by-step guide to complete these tasks using the AWS Management Console or AWS CLI.
+
+### Option 1: AWS Management Console
+Step 1: Wait for devops-rds to be Available & Take a Snapshot
+
+ - Open the AWS Management Console and navigate to Amazon RDS > Databases.
+ - Locate devops-rds. Verify its status shows Available.
+ - Select devops-rds, click on Actions, and select Take snapshot.
+ - Set the Target DB snapshot identifier to devops-snapshot.
+
+Click Take snapshot.
+
+Go to Snapshots in the left sidebar and wait until devops-snapshot shows a status of Available.
+------------------------------------------------------
+
+Step 2: Restore the Snapshot to a New Instance
+ 
+  -  Under Snapshots, select devops-snapshot.
+  - Click Actions > Restore snapshot.
+  - Configure the restored instance:
+  - DB instance identifier: devops-snapshot-restore
+  - DB instance class: Choose db.t3.micro (under Burstable classes).
+
+Keep the remaining settings as required or default, then click Restore DB instance.
+----------------------------------------------------------
+Step 3: Verify the New RDS Instance
+
+- Go back to Databases.
+- Monitor devops-snapshot-restore until its status changes from Creating to Available.
+
