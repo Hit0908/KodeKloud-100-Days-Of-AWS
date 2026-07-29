@@ -1,0 +1,41 @@
+The Nautilus DevOps team is embracing serverless architecture by integrating AWS Lambda into their operational tasks. They have decided to deploy a simple Lambda function that will return a custom greeting to demonstrate serverless capabilities effectively. This function is crucial for showcasing rapid deployment and easy scalability features of AWS Lambda to the team.
+Create Lambda Function: Create a Lambda function named xfusion-lambda.
+Runtime: Use the Runtime Python.
+Deploy: The function should print the body Welcome to KKE AWS Labs!.
+Status Code: Ensure the status code is 200.
+IAM Role: Create and use the IAM role named lambda_execution_role.
+-----------------------------------------------------------------------
+Option 1: AWS Management Console
+
+1. Navigate to AWS Lambda:
+    Open the AWS Management Console and search for Lambda.
+    Click Create function.
+2.Configure Function Details:
+    Choose Author from scratch.
+    Function name: Enter xfusion-lambda.
+    Runtime: Select Python 3.x (e.g., Python 3.12 or Python 3.11).
+3. Configure IAM Role:
+    Open the AWS IAM Console.
+    In the left navigation pane, choose Roles, then click Create role.
+    For Trusted entity type, select AWS service.
+    For Use case, choose Lambda, then click Next.
+    Add permissions:Search for and select AWSLambdaBasicExecutionRole (this gives basic CloudWatch logging permissions).  
+    Select any additional policy your Lambda function needs (e.g., AmazonS3ReadOnlyAccess, AmazonDynamoDBFullAccess).Click Next.
+    Enter a Role name (e.g., lambda_execution_role or my-lambda-role).
+  Click Create role.
+  Add Function Code:
+------------------------------------------------
+Scroll down to the Code source section.
+
+Replace the contents of lambda_function.py with the following Python code:
+
+Python
+def lambda_handler(event, context):
+    return {
+        'statusCode': 200,
+        'body': 'Welcome to KKE AWS Labs!'
+    }
+--------------------------------------------------
+
+4. Deploy & Save:
+    Click Deploy to save and update the function changes.
