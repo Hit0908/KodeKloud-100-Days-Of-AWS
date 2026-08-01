@@ -1,0 +1,23 @@
+Step 1: Set up the RDS Database (1:37 – 4:52)
+
+Navigate to the RDS Dashboard and create a new database.
+Select MySQL (version 8.4.5) with a db.t3.micro instance type.
+Configure the storage to 5GB using the gp2 storage type.
+Crucial: Set the database to be private (Public access: No) to ensure security.
+Set a database identifier, master username, and initial database name (DevOpsDB).
+Step 2: Configure Security Groups (5:19 – 8:42)
+
+Delete older sg in rd db and create a newone, also in ec2 create a new sg change the allocation of sg of the ec2 to new sg.
+Create a security group for the EC2 instance that allows SSH (port 22) and HTTP (port 80) traffic.
+Create a separate security group for the RDS instance.
+Modify the RDS inbound rules to allow traffic only on port 3306 (MySQL) originating from the security group assigned to your EC2 instance.
+Step 3: Establish Passwordless Authentication (9:00 – 12:12)
+
+Generate SSH keys on the local client machine if they do not exist.
+Connect to the EC2 instance and add the public key to the ~/.ssh/authorized_keys file to enable secure, passwordless access.
+Step 4: Deploy the Application (12:16 – 16:51)
+
+Use SCP to copy your index.php file from the local client to the /var/www/html directory on the EC2 instance.
+Log in to the EC2 instance and verify the file transfer.
+Edit the index.php file to include the specific database credentials (endpoint/host, username, password, and database name).
+Finally, verify the setup by navigating to the public IP of the EC2 instance in a web browser to confirm a "Connection Successful" message.
