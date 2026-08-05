@@ -1,0 +1,202 @@
+The Nautilus DevOps team needs to implement priority queuing using Amazon SQS and SNS. The goal is to create a system where messages with different priorities are handled accordingly. You are required to use AWS CloudFormation to deploy the necessary resources in your AWS account. The CloudFormation template should be created on the AWS client host at /root/datacenter-priority-stack.yml, the stack name must be datacenter-priority-stack and it should create the following resources:
+
+Two SQS queues named datacenter-High-Priority-Queue and datacenter-Low-Priority-Queue.
+An SNS topic named datacenter-Priority-Queues-Topic.
+A Lambda function named datacenter-priorities-queue-function that will consume messages from the SQS queues. The Lambda function code is provided in /root/index.py on the AWS client host.
+An IAM role named lambda_execution_role that provides the necessary permissions for the Lambda function to interact with SQS and SNS.
+Once the stack is deployed, to test the same you can publish messages to the SNS topic, invoke the Lambda function and observe the order in which they are processed by the Lambda function. The high-priority message must be processed first.
+
+topicarn=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'datacenter-Priority-Queues-Topic')].TopicArn" --output text)
+
+aws sns publish --topic-arn $topicarn --message 'High Priority message 1' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"high"}}'
+
+aws sns publish --topic-arn $topicarn --message 'High Priority message 2' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"high"}}'
+
+aws sns publish --topic-arn $topicarn --message 'Low Priority message 1' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"low"}}'
+
+aws sns publish --topic-arn $topicarn --message 'Low Priority message 2' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"low"}}'
+
+
+Use below given AWS Credentials: (You can run the showcreds command on aws-client host to retrieve these credentials)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+To implement the priority queuing system using AWS CloudFormation, you need to create the template file, package/inline the Lambda code, deploy the stack, and subscribe the SQS queues to the SNS topic using filter policies.
+
+Here is the exact AWS CloudFormation template file to save at /root/datacenter-priority-stack.yml on the aws-client host.
+
+# CloudFormation Template
+Save the following YAML code into /root/datacenter-priority-stack.yml:
+
+````````
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Priority Queuing System using SQS, SNS, and Lambda.'
+
+Resources:
+
+  # 1. IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda_execution_role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+
+  # 2. SQS High Priority Queue
+  HighPriorityQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: datacenter-High-Priority-Queue
+
+  # 3. SQS Low Priority Queue
+  LowPriorityQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: datacenter-Low-Priority-Queue
+
+  # 4. SNS Topic
+  PriorityQueuesTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: datacenter-Priority-Queues-Topic
+
+  # 5. Queue Policies to allow SNS to send messages to SQS
+  HighPriorityQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref HighPriorityQueue
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: sqs:SendMessage
+            Resource: !GetAtt HighPriorityQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref PriorityQueuesTopic
+
+  LowPriorityQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref LowPriorityQueue
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: sqs:SendMessage
+            Resource: !GetAtt LowPriorityQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref PriorityQueuesTopic
+
+  # 6. SNS Subscriptions with Filter Policies
+  HighPrioritySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref PriorityQueuesTopic
+      Endpoint: !GetAtt HighPriorityQueue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+      FilterPolicy:
+        priority:
+          - high
+
+  LowPrioritySubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref PriorityQueuesTopic
+      Endpoint: !GetAtt LowPriorityQueue.Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+      FilterPolicy:
+        priority:
+          - low
+
+  # 7. Lambda Function
+  PriorityQueueFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: datacenter-priorities-queue-function
+      Runtime: python3.9
+      Handler: index.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+
+          def lambda_handler(event, context):
+              for record in event.get('Records', []):
+                  print(f"Processing message: {record['body']}")
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps('Messages processed successfully')
+              }
+
+  # 8. Event Source Mappings (Lambda SQS Triggers)
+  HighPriorityEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn: !GetAtt HighPriorityQueue.Arn
+      FunctionName: !Ref PriorityQueueFunction
+      Enabled: true
+
+  LowPriorityEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      EventSourceArn: !GetAtt LowPriorityQueue.Arn
+      FunctionName: !Ref PriorityQueueFunction
+      Enabled: true
+
+`````````
+
+Step-by-Step Deployment Instructions
+
+1.Update Code from /root/index.py (Optional):
+Sync existing Python code into template if required.If /root/index.py contains specific custom logic,
+inspect it and replace the inline code under ZipFile in the CloudFormation template, 
+or package it into a .zip archive before creating the stack.
+
+2.Deploy CloudFormation Stack:Run the following AWS CLI command on the aws-client host to create the stack:
+``` 
+aws cloudformation create-stack \
+  --stack-name datacenter-priority-stack \
+  --template-body file:///root/datacenter-priority-stack.yml \
+  --capabilities CAPABILITY_NAMED_IAM 
+  
+```
+
+3.Wait for Stack Creation:
+Monitor the deployment progress until completion:
+````
+    aws cloudformation wait stack-create-complete --stack-name datacenter-priority-stack
+    
+````
+
+4.Publish Test Messages:
+Execute the provided commands to publish messages to the SNS topic:
+````
+topicarn=$(aws sns list-topics --query "Topics[?contains(TopicArn, 'datacenter-Priority-Queues-Topic')].TopicArn" --output text)
+
+aws sns publish --topic-arn $topicarn --message 'High Priority message 1' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"high"}}'
+aws sns publish --topic-arn $topicarn --message 'High Priority message 2' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"high"}}'
+aws sns publish --topic-arn $topicarn --message 'Low Priority message 1' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"low"}}'
+aws sns publish --topic-arn $topicarn --message 'Low Priority message 2' --message-attributes '{"priority" : { "DataType":"String", "StringValue":"low"}}'
+
+````
